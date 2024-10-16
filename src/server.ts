@@ -8,14 +8,12 @@ import accountRoutes from './routes/accountRoutes';
 import chatbotRoutes from './routes/chatbotRoutes';
 import indexRoutes from './routes/index';
 
-
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const numCPUs = os.cpus().length;
 
 app.use(express.json());
-
 app.use(chatbotRoutes);
 app.use(accountRoutes);
 app.use(indexRoutes);

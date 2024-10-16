@@ -1,7 +1,12 @@
 import { Request, Response } from 'express';
-import DBVM from '../models/dbVM'; // Database VM model
-import ChatRoomVM from '../models/chatRoomVM'; // ChatRoomVM model
+import {createDBVMModel} from '../models/dbVM'; // Database VM model
+import infraDBConnection from '../utils/infraDBConnection';
+import {createChatRoomVMModel} from '../models/chatRoomVM'; // ChatRoomVM model
 // Get all database VMs with filtering and pagination
+
+const DBVM = createDBVMModel(infraDBConnection)
+const ChatRoomVM = createChatRoomVMModel(infraDBConnection);
+
 export const getAllDbVMs = async (req: Request, res: Response) => {
   const { cluster_id, zone, host, domain } = req.query;
   const { page_length = 20, page_num = 1 } = req.query;

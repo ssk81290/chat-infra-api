@@ -1,6 +1,9 @@
 // src/controllers/accountController.ts
 import { Request, Response } from 'express';
-import Account from '../models/account';
+import infraDBConnection  from '../utils/infraDBConnection';
+import {createAccountModel} from '../models/account';
+
+const Account = createAccountModel(infraDBConnection);
 
 // Create a new account
 export const createAccount = async (req: Request, res: Response) => {

@@ -1,5 +1,5 @@
 // src/models/user.ts
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Connection } from 'mongoose';
 
 // Interface for User Document
 interface IUser extends Document {
@@ -48,11 +48,11 @@ interface IUser extends Document {
 
 // User Schema Definition
 const userSchema: Schema = new Schema({
-  account_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_accounts', required: true },
+  account_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
   account_num: { type: String, required: true, index: true },
-  chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_chatbots', required: true },
+  chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Chatbot', required: true },
   chatbot_num: { type: String, required: true, index: true },
-  chatroom_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_chatrooms', required: true },
+  chatroom_id: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom', required: true },
   
   status: { type: String, required: true, index: true },  // Chat Room User Status
   user_ref: { type: String, required: true },              // User authentication reference
@@ -100,7 +100,6 @@ const userSchema: Schema = new Schema({
 // Create indexes on important fields
 userSchema.index({ account_num: 1, chatbot_num: 1, chatroom_id: 1, status: 1 });
 
-// User model
-const User = mongoose.model<IUser>('col_chatroom_users', userSchema);
-
-export default User;
+export const createUserModel = (connection: Connection) => {
+  return connection.model<IUser>("User", userSchema, 'col_chatroom_users');
+};

@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import Auth from '../models/infra_access';
+import { createAuthModel } from '../models/infra_access';
+import infraDBConnection from '../utils/infraDBConnection';
+
+const Auth = createAuthModel(infraDBConnection);
 
 const basicAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.header('Authorization');

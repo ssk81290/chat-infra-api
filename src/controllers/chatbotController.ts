@@ -1,6 +1,9 @@
 // src/controllers/chatbotController.ts
 import { Request, Response } from 'express';
-import Chatbot from '../models/chatbot';
+import infraDBConnection from '../utils/infraDBConnection';
+import { createChatbotModel } from '../models/chatbot';   // Chatbot model
+
+const Chatbot = createChatbotModel(infraDBConnection);
 
 // Create a new chatbot
 export const createChatbot = async (req: Request, res: Response) => {

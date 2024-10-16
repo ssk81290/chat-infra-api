@@ -1,5 +1,5 @@
 // src/models/account.ts
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, {Connection,  Document, Schema } from 'mongoose';
 
 // Interface for the Account
 interface IAccount extends Document {
@@ -26,10 +26,10 @@ interface IAccount extends Document {
 
 // Account schema
 const accountSchema: Schema = new mongoose.Schema({
-  cluster_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'col_cluster' },
-  cluster_num: { type: String, required: true, ref: 'col_cluster' },
-  access_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'col_infra_access' },
-  access_num: { type: String, required: true, ref: 'col_infra_access' },
+  cluster_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Cluster' },
+  cluster_num: { type: String, required: true, ref: 'Cluster' },
+  access_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Auth' },
+  access_num: { type: String, required: true, ref: 'Auth' },
   customer_id: { type: String, required: true },
   account_num: { type: String, required: true, unique: true, index: true },
   account_name: { type: String, required: true, index: true },
@@ -47,7 +47,8 @@ const accountSchema: Schema = new mongoose.Schema({
   }
 });
 
-// Account model
-const Account = mongoose.model<IAccount>('col_accounts', accountSchema);
 
-export default Account;
+
+export const createAccountModel = (connection: Connection) => {
+  return connection.model<IAccount>("Account", accountSchema, 'col_accounts');
+};

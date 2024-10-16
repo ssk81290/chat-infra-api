@@ -1,5 +1,5 @@
 // src/models/chatRoomToken.ts
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, {Connection,  Schema, Document } from 'mongoose';
 
 // Interface for Token Document
 interface IToken extends Document {
@@ -14,8 +14,8 @@ interface IToken extends Document {
 
 // Token Schema Definition
 const tokenSchema: Schema = new Schema({
-  chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_chatbots', required: true },
-  chatroom_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_chatrooms', required: true },
+  chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Chatbot', required: true },
+  chatroom_id: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom', required: true },
   user_ref: { type: String, required: true },      // User reference
   name: { type: String, required: true },          // User's name
   role: { type: String, required: true },          // User's role (e.g., viewer, sender, etc.)
@@ -23,7 +23,11 @@ const tokenSchema: Schema = new Schema({
   expiry: { type: Date, required: true },          // Expiry time of the token
 });
 
-// Token model
-const Token = mongoose.model<IToken>('col_chatroom_tokens', tokenSchema);
+// // Token model
+// const Token = mongoose.model<IToken>("Token", tokenSchema,'col_chatroom_tokens');
 
-export default Token;
+// export default Token;
+
+export const createTokenModel = (connection: Connection) => {
+  return connection.model<IToken>("Token", tokenSchema,'col_chatroom_tokens');
+};

@@ -1,5 +1,5 @@
 // src/models/dbVM.ts
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Connection } from 'mongoose';
 
 // Interface for Database VM Document
 interface IDBVM extends Document {
@@ -26,7 +26,7 @@ interface IDBVM extends Document {
 
 // Database VM Schema Definition
 const dbVMSchema: Schema = new Schema({
-  cluster_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_cluster', index: true, required: true }, // Cluster reference
+  cluster_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Cluster', index: true, required: true }, // Cluster reference
 
   host: { type: String, index: true, required: true }, // Hostname
   domain: { type: String, index: true, required: true }, // Domain
@@ -41,7 +41,7 @@ const dbVMSchema: Schema = new Schema({
   status: { type: String, enum: ['open', 'assigned'], required: true, index: true }, // Assignment status (open/assigned)
 
   account: {
-    account_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_accounts' }, // Assigned account reference
+    account_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' }, // Assigned account reference
     account_num: { type: String, index: true }, // Assigned account number
     account_name: { type: String } // Assigned account name
   },
@@ -58,6 +58,13 @@ const dbVMSchema: Schema = new Schema({
 dbVMSchema.index({ host: 1, status: 1, 'account.account_num': 1 });
 
 // DBVM model
-const DBVM = mongoose.model<IDBVM>('col_vms_db', dbVMSchema);
+// const DBVM = mongoose.model<IDBVM>("DBVM", dbVMSchema, 'col_vms_db');
 
-export default DBVM;
+// export default DBVM;
+
+export const createDBVMModel = (connection: Connection) => {
+  return connection.model<IDBVM>("DBVM", dbVMSchema, 'col_vms_db');
+
+};
+
+

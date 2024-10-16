@@ -1,5 +1,5 @@
 // src/models/chatRoom.ts
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Connection } from 'mongoose';
 
 // Enum for Chat Room Status
 const ChatRoomStatusEnum = ['active', 'idle', 'expired'] as const;
@@ -40,14 +40,14 @@ interface IChatRoom extends Document {
 
 // ChatRoom Schema Definition
 const chatRoomSchema: Schema = new Schema({
-  cluster_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_cluster', required: true },
+  cluster_id: { type: mongoose.Schema.Types.ObjectId, ref: 'cluster', required: true },
   cluster_num: { type: String, required: true },
   
-  account_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_accounts', required: true },
+  account_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
   account_num: { type: String, required: true, index: true },
   account_name: { type: String, required: true, index: true },
   
-  chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_chatbots', required: true },
+  chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Chatbot', required: true },
   chatbot_num: { type: String, required: true, index: true },
   chatbot_name: { type: String, required: true, index: true },
   
@@ -83,7 +83,12 @@ const chatRoomSchema: Schema = new Schema({
 // Create indexes on important fields
 chatRoomSchema.index({ account_num: 1, chatbot_num: 1, host: 1, 'track.started': 1, 'track.expired': 1 });
 
-// ChatRoom model
-const ChatRoom = mongoose.model<IChatRoom>('col_chatrooms', chatRoomSchema);
+// // ChatRoom model
+// const ChatRoom = mongoose.
 
-export default ChatRoom;
+// export default ChatRoom;
+
+
+export const createChatRoomModel = (connection: Connection) => {
+  return connection.model<IChatRoom>("ChatRoom", chatRoomSchema, 'col_chatrooms' );
+};

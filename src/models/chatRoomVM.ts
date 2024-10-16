@@ -1,5 +1,5 @@
 // src/models/chatRoomVM.ts
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Connection } from 'mongoose';
 
 // Interface for ChatRoom VM Document
 interface IChatRoomVM extends Document {
@@ -36,6 +36,10 @@ const chatRoomVMSchema: Schema = new Schema({
 chatRoomVMSchema.index({ host: 1, domain: 1 });
 
 // ChatRoom VM model
-const ChatRoomVM = mongoose.model<IChatRoomVM>('col_vms_chatroom', chatRoomVMSchema);
+// const ChatRoomVM = mongoose.model<IChatRoomVM>("ChatRoomVM", chatRoomVMSchema , 'col_vms_chatroom');
 
-export default ChatRoomVM;
+// export default ChatRoomVM;
+
+export const createChatRoomVMModel = (connection: Connection) => {
+  return connection.model<IChatRoomVM>("ChatRoomVM", chatRoomVMSchema , 'col_vms_chatroom');
+};

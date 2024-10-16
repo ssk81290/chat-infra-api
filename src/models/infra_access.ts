@@ -1,5 +1,5 @@
 // src/models/auth.ts
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Connection } from 'mongoose';
 
 // Enum for Access Status
 const AccessStatusEnum = ['active', 'suspended'] as const;
@@ -42,7 +42,9 @@ const authSchema: Schema = new Schema({
   }
 });
 
-// Auth model
-const Auth = mongoose.model<IAuth>('col_infra_access', authSchema);
 
-export default Auth;
+
+export const createAuthModel = (connection: Connection) => {
+  return connection.model<IAuth>("Auth", authSchema,'col_infra_access');
+
+};

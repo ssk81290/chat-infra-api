@@ -1,5 +1,5 @@
 // src/models/userLog.ts
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Connection } from 'mongoose';
 
 // Interface for UserLog Document
 interface IUserLog extends Document {
@@ -19,9 +19,9 @@ interface IUserLog extends Document {
 
 // UserLog Schema Definition
 const userLogSchema: Schema = new Schema({
-  chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_chatbots', required: true },
-  chatroom_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_chatrooms', required: true },
-  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'col_chatroom_users', required: true }, // Reference to chat room user
+  chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Chatbot', required: true },
+  chatroom_id: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom', required: true },
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to chat room user
   user_ref: { type: String, required: true },                                     // Authentication reference
   name: { type: String, required: true },                                         // User's name
   role: { type: String, required: true },                                         // User's role
@@ -36,7 +36,8 @@ const userLogSchema: Schema = new Schema({
 // Create indexes for chatbot_id, chatroom_id, and user_id
 userLogSchema.index({ chatbot_id: 1, chatroom_id: 1, user_id: 1 });
 
-// UserLog model
-const UserLog = mongoose.model<IUserLog>('col_chatroom_user_log', userLogSchema);
 
-export default UserLog;
+
+export const createUserLogModel = (connection: Connection) => {
+  return connection.model<IUserLog>("UserLog",  userLogSchema, 'col_chatroom_user_log');
+};

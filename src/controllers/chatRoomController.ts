@@ -1,14 +1,22 @@
 // src/controllers/chatRoomController.ts
 import { Request, Response } from 'express';
-import ChatRoom from '../models/chatRoom'; // ChatRoom model
-import Chatbot from '../models/chatbot';   // Chatbot model
-import User from '../models/user';
-import UserLog from '../models/userLog'; // UserLog model
-import Token from '../models/chatRoomToken'; // Token model
+import {createChatRoomModel} from '../models/chatRoom'; // ChatRoom model
+import infraDBConnection from '../utils/infraDBConnection';
+import chatRoomDBConnection from '../utils/chatRoomConnection';
+import { createChatbotModel } from '../models/chatbot';   // Chatbot model
+import {createUserModel} from '../models/user';
+import {createUserLogModel} from '../models/userLog'; // UserLog model
+import {createTokenModel} from '../models/chatRoomToken'; // Token model
 import jwt from 'jsonwebtoken'; // JWT for generating tokens
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 dotenv.config();
+const User = createUserModel(chatRoomDBConnection);
+const UserLog = createUserLogModel(chatRoomDBConnection);
+const Chatbot = createChatbotModel(infraDBConnection);
+const ChatRoom = createChatRoomModel(infraDBConnection);
+const Token = createTokenModel(chatRoomDBConnection);
+
 // Create a new chat room under a chatbot
 export const createChatRoom = async (req: Request, res: Response) => {
   const { chatbot_num } = req.params;
@@ -40,7 +48,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
       intent: intent || {}, // Default to empty object if no intent provided
       status: 'idle',       // Idle status
       host: null,           // No host assigned at creation
-      domain: null,         // No domain assigned at creation
+      domain: chatbot.access.web.domains,         // No domain assigned at creation
       in_session: {
         users: 0,
         bots: 0,
@@ -460,7 +468,7 @@ export const findRoom = async (req: Request, res: Response) => {
         intent: intent || {}, // Default to empty object if no intent provided
         status: 'idle',       // Idle status
         host: null,           // No host assigned at creation
-        domain: null,         // No domain assigned at creation
+        domain: chatbot.access.web.domains,         // No domain assigned at creation
         in_session: {
           users: 0,
           bots: 0,
@@ -518,13 +526,13 @@ export const findRoom = async (req: Request, res: Response) => {
     return res.status(200).json({
       result: 200,
       token,
-      url: `https://chat.example.com/rooms/${chatroom._id}?token=${token}`, // URL to join the room
+      url: `https://${chatroom.domain}/rooms/${chatroom._id}?token=${token}`, // URL to join the room
       data: {
         host: chatroom.host || 'default-host', // If no host is assigned, return a default
         domain: chatroom.domain || 'chat.example.com',
         chatroom_id: chatroom._id.toString(),
         role: user.role,
-        name: user.name || 'Guest'
+        name: user.name || 'Viewer'
       }
     });
   } catch (error) {
@@ -598,7 +606,7 @@ export const getRoomToken = async (req: Request, res: Response) => {
     return res.status(200).json({
       result: 200,
       token,
-      url: `https://chat.example.com/rooms/${chatroom._id}?token=${token}`, // URL to join the room
+      url: `https://${chatroom.domain}/rooms/${chatroom._id}?token=${token}`, // URL to join the room
       data: {
         host: chatroom.host || 'default-host', // If no host is assigned, return a default
         domain: chatroom.domain || 'chat.example.com',

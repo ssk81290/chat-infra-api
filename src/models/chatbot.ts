@@ -1,5 +1,5 @@
 // src/models/chatbot.ts
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, {Connection, Document, Schema } from 'mongoose';
 
 // Interface for the Chatbot
 interface IChatbot extends Document {
@@ -82,7 +82,7 @@ interface IChatbot extends Document {
 const chatbotSchema: Schema = new mongoose.Schema({
     cluster_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Cluster', required: true },
     cluster_num: { type: String, required: true },
-    access_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Access', required: true },
+    access_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Auth', required: true },
     access_num: { type: String, required: true },
     account_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
     account_num: { type: String, required: true, index: true },
@@ -158,7 +158,8 @@ const chatbotSchema: Schema = new mongoose.Schema({
     }
 });
 
-// Chatbot model
-const Chatbot = mongoose.model<IChatbot>('col_chatbots', chatbotSchema);
 
-export default Chatbot;
+export const createChatbotModel = (connection: Connection) => {
+    return connection.model<IChatbot>("Chatbot", chatbotSchema, 'col_chatbots');
+};
+  
