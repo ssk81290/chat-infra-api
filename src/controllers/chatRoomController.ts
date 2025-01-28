@@ -83,6 +83,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       result: 500,
       message: 'Error creating chat room',
@@ -432,15 +433,30 @@ export const getUserMovements = async (req: Request, res: Response) => {
 // Function to find or create a chat room and generate a token
 export const findRoom = async (req: Request, res: Response) => {
   const { chatbot_num } = req.params;
-  const { user, intent } = req.body;
+  const { user, intent , custom_data} = req.body;
 
   try {
+    let chatroom;
+    if(intent && Object.keys(intent).length ===  0)
+    {
+       chatroom = await ChatRoom.findOne({
+        "chatbot_num":chatbot_num,       
+        $expr: {
+          $gt: ["$capacity.users", "$in_session.users"] // Compare capacity.users and in_session.users
+        }
+      });
+    }
+    else{
+       chatroom = await ChatRoom.findOne({
+        "chatbot_num":chatbot_num,  
+        'intent': { $eq: intent },        
+        $expr: {
+          $gt: ["$capacity.users", "$in_session.users"] // Compare capacity.users and in_session.users
+        }
+      });
+    }
     // Step 1: Search for an existing chat room that matches the intent and has available seats
-    let chatroom = await ChatRoom.findOne({
-      chatbot_num,
-      'intent': { $eq: intent }, // Match intent exactly or use semantic matching with LLM in the future
-      'capacity.users': { $gt: 'in_session.users' } // Check if seats are available
-    });
+    
 
     // Step 2: If no matching room, create a new one
     if (!chatroom) {
@@ -493,31 +509,42 @@ export const findRoom = async (req: Request, res: Response) => {
     // Step 3: Generate a signed JWT token for the user to join the chat room
     const tokenData = {
       token_id: new mongoose.Types.ObjectId().toString(),
+      chatbot_id : chatroom.chatbot_id,
       account_num: chatroom.account_num,
       chatbot_num: chatroom.chatbot_num,
       chatroom_id: chatroom._id.toString(),
+      host: chatroom.host || 'default-host', // If no host is assigned, return a default
+      domain: chatroom.domain || 'chat.example.com',   
       expiry: Math.floor(Date.now() / 1000) + (60 * 30), // Token expires in 30 minutes
       user: {
-        user_ref: user.user_ref,
-        name: user.name || 'Guest', // Use "Guest" if no name is provided
+        user_ref: user.user_ref || 'viewer',
+        name: user.name || 'viewer', // Use "viewer" if no name is provided
         role: user.role,
         ip: user.ip,
-        user_agent: user.user_agent
+        user_agent: user.user_agent,
+        photo: user.photo
       },
-      intent
+      intent,
+      custom_data : custom_data
     };
 
     const token = jwt.sign(tokenData, process.env.JWT_SECRET!, {
-      expiresIn: '30m' // Token valid for 30 minutes
+      expiresIn: '300m' // Token valid for 30 minutes
     });
 
     // Step 4: Store the token in the token collection for validation later
     const newTokenEntry = new Token({
       token_id: tokenData.token_id,
+      chatbot_id: chatroom.chatbot_id,
       chatroom_id: chatroom._id,
-      user_ref: user.user_ref,
+      host: chatroom.host || 'default-host', // If no host is assigned, return a default
+      domain: chatroom.domain || 'chat.example.com',     
+      user_ref: user.user_ref || "viewer",
+      photo:user.photo,
+      name: user.name || 'viewer',
+      role: user.role || 'viewer',
+      issued: new Date(),
       expiry: new Date(Date.now() + 30 * 60000), // Expiry in 30 minutes
-      used: false
     });
 
     await newTokenEntry.save();
@@ -526,16 +553,18 @@ export const findRoom = async (req: Request, res: Response) => {
     return res.status(200).json({
       result: 200,
       token,
-      url: `https://${chatroom.domain}/rooms/${chatroom._id}?token=${token}`, // URL to join the room
+      url: `https://${chatroom.domain}?token=${token}`, // URL to join the room
       data: {
         host: chatroom.host || 'default-host', // If no host is assigned, return a default
         domain: chatroom.domain || 'chat.example.com',
         chatroom_id: chatroom._id.toString(),
-        role: user.role,
-        name: user.name || 'Viewer'
+        role: user.role || 'viewer',
+        name: user.name || 'viewer'
+        
       }
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       result: 500,
       message: 'Error finding or creating room',
@@ -550,7 +579,7 @@ export const findRoom = async (req: Request, res: Response) => {
 // Function to generate a token for accessing a known chat room
 export const getRoomToken = async (req: Request, res: Response) => {
   const { chatroom_id } = req.params;
-  const { user, intent } = req.body;
+  const { user, intent, custom_data } = req.body;
 
   try {
     // Step 1: Retrieve the chat room by chatroom_id
@@ -573,19 +602,23 @@ export const getRoomToken = async (req: Request, res: Response) => {
       chatroom_id: chatroom._id.toString(),
       account_num: chatroom.account_num,
       chatbot_num: chatroom.chatbot_num,
+      host: chatroom.host || 'default-host', // If no host is assigned, return a default
+      domain: chatroom.domain || 'chat.example.com',  
       expiry: Math.floor(Date.now() / 1000) + (60 * 30), // Token expires in 30 minutes
       user: {
-        user_ref: user.user_ref,
-        name: user.name || 'Guest', // Default to "Guest" for viewer role
-        role: user.role,
+        user_ref: user.user_ref || "viewer",
+        name: user.name || 'viewer', // Default to "Guest" for viewer role
+        role: user.role || 'viewer ',
         ip: user.ip,
-        user_agent: user.user_agent
+        user_agent: user.user_agent,
+        photo:user.photo
       },
-      intent
+      intent,
+      custom_data : custom_data
     };
 
     const token = jwt.sign(tokenData, process.env.JWT_SECRET!, {
-      expiresIn: '30m' // Token valid for 30 minutes
+      expiresIn: '300m' // Token valid for 30 minutes
     });
 
     // Step 3: Store the token in the token collection for validation later
@@ -593,8 +626,11 @@ export const getRoomToken = async (req: Request, res: Response) => {
       token_id: tokenData.token_id,
       chatbot_id: chatroom.chatbot_id,
       chatroom_id: chatroom._id,
-      user_ref: user.user_ref,
+      host: chatroom.host || 'default-host', // If no host is assigned, return a default
+      domain: chatroom.domain || 'chat.example.com',
+      user_ref: user.user_ref || "viewer", 
       name: user.name || 'Guest',
+      photo:user.photo,
       role: user.role,
       issued: new Date(),
       expiry: new Date(Date.now() + 30 * 60000), // Expiry in 30 minutes
@@ -606,13 +642,14 @@ export const getRoomToken = async (req: Request, res: Response) => {
     return res.status(200).json({
       result: 200,
       token,
-      url: `https://${chatroom.domain}/rooms/${chatroom._id}?token=${token}`, // URL to join the room
+      url: `https://${chatroom.domain}?token=${token}`, // URL to join the room
       data: {
         host: chatroom.host || 'default-host', // If no host is assigned, return a default
         domain: chatroom.domain || 'chat.example.com',
         chatroom_id: chatroom._id.toString(),
-        role: user.role,
-        name: user.name || 'Guest'
+        role: user.role || 'viewer',
+        name: user.name || 'viewer'
+        
       }
     });
   } catch (error) {

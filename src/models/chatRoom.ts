@@ -41,8 +41,7 @@ interface IChatRoom extends Document {
 // ChatRoom Schema Definition
 const chatRoomSchema: Schema = new Schema({
   cluster_id: { type: mongoose.Schema.Types.ObjectId, ref: 'cluster', required: true },
-  cluster_num: { type: String, required: true },
-  
+  cluster_num: { type: String, required: true },  
   account_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
   account_num: { type: String, required: true, index: true },
   account_name: { type: String, required: true, index: true },
@@ -56,7 +55,7 @@ const chatRoomSchema: Schema = new Schema({
   
   intent: { type: Schema.Types.Mixed, default: {} },  // Flexible intent object
   
-  host: { type: String, required: true, index: true },
+  host: { type: String, required: false, index: true },
   domain: { type: String, required: true },
   
   capacity: {
@@ -78,7 +77,7 @@ const chatRoomSchema: Schema = new Schema({
     started: { type: Date },
     expired: { type: Date, index: true }
   }
-});
+},{ versionKey: false });
 
 // Create indexes on important fields
 chatRoomSchema.index({ account_num: 1, chatbot_num: 1, host: 1, 'track.started': 1, 'track.expired': 1 });

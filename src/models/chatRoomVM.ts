@@ -30,7 +30,7 @@ const chatRoomVMSchema: Schema = new Schema({
   track: {
     added: { type: Date, required: true } // When the VM was added
   }
-});
+},{ versionKey: false });
 
 // Create indexes for host and domain
 chatRoomVMSchema.index({ host: 1, domain: 1 });

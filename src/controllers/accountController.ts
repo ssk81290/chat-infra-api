@@ -17,7 +17,7 @@ export const createAccount = async (req: Request, res: Response) => {
     status,
     chatbot
   } = req.body;
-
+  console.log("reqBody", req.body);
   // Generate a random 8-char account number
   const account_num = Math.random().toString(36).substring(2, 10).toUpperCase();
 
@@ -45,6 +45,7 @@ export const createAccount = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: 'Error creating account' });
   }
 };

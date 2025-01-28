@@ -31,7 +31,7 @@ const userLogSchema: Schema = new Schema({
     connected: { type: Date, required: true },                                    // Timestamp when user connected
     disconnected: { type: Date }                                                  // Timestamp when user disconnected
   }
-});
+},{ versionKey: false });
 
 // Create indexes for chatbot_id, chatroom_id, and user_id
 userLogSchema.index({ chatbot_id: 1, chatroom_id: 1, user_id: 1 });

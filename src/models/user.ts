@@ -95,7 +95,7 @@ const userSchema: Schema = new Schema({
     connected: { type: Date },
     disconnected: { type: Date }
   }
-});
+},{ versionKey: false });
 
 // Create indexes on important fields
 userSchema.index({ account_num: 1, chatbot_num: 1, chatroom_id: 1, status: 1 });

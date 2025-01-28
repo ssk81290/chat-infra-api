@@ -7,6 +7,8 @@ interface IDBVM extends Document {
   host: string;
   domain: string;
   port: string;
+  type:string;
+  collection_name:string;
   username: string;
   password: string;
   zone: string;
@@ -27,7 +29,8 @@ interface IDBVM extends Document {
 // Database VM Schema Definition
 const dbVMSchema: Schema = new Schema({
   cluster_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Cluster', index: true, required: true }, // Cluster reference
-
+  type: { type: String, index: true, required: true }, // Hostname
+  collection_name : {type: String, required:false},
   host: { type: String, index: true, required: true }, // Hostname
   domain: { type: String, index: true, required: true }, // Domain
   port: { type: String, index: true, required: true }, // Port number
@@ -52,7 +55,7 @@ const dbVMSchema: Schema = new Schema({
     created: { type: Date, required: true }, // When the VM was created
     assigned: { type: Date } // When the VM was assigned to an account
   }
-});
+},{ versionKey: false });
 
 // Create indexes
 dbVMSchema.index({ host: 1, status: 1, 'account.account_num': 1 });

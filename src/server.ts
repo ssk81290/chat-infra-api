@@ -1,6 +1,5 @@
 // src/server.ts
 import express from 'express';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cluster from 'cluster';
 import os from 'os';
@@ -18,15 +17,9 @@ app.use(chatbotRoutes);
 app.use(accountRoutes);
 app.use(indexRoutes);
 // MongoDB connection
-mongoose.connect(process.env.INFRA_MONGO_URI!, {})
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
 
-  mongoose.connect(process.env.CHATROOM_MONGO_URI!, {})
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
 // Cluster setup
-if (cluster.isMaster) {
+if (cluster.isMaster && process.env.ENVIRONMENT == 'production') {
   console.log(`Master ${process.pid} is running`);
 
   // Fork workers.
@@ -42,3 +35,4 @@ if (cluster.isMaster) {
     console.log(`Worker ${process.pid} listening on port ${PORT}`);
   });
 }
+

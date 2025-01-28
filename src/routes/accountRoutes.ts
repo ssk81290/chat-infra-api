@@ -12,8 +12,8 @@ import basicAuthMiddleware from '../middleware/auth';
 const router = express.Router();
 
 // POST /v1/chatbots
-router.post('/account', basicAuthMiddleware, createAccount);
-router.get('/account/:id', basicAuthMiddleware, getAccount);
+router.post('/v1/account', basicAuthMiddleware, createAccount);
+router.get('/v1/account/:id', basicAuthMiddleware, getAccount);
 router.post('/v1/accounts/search', basicAuthMiddleware, searchAccounts);
 router.patch('/v1/accounts/:account_num', basicAuthMiddleware, updateAccountProfile);
 router.patch('/v1/accounts/:account_num/status', basicAuthMiddleware, updateAccountStatus);

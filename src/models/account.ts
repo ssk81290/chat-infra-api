@@ -45,7 +45,7 @@ const accountSchema: Schema = new mongoose.Schema({
     activated: { type: Date },
     suspended: { type: Date }
   }
-});
+},{ versionKey: false });
 
 
 

@@ -22,7 +22,10 @@ const basicAuthMiddleware = async (req: Request, res: Response, next: NextFuncti
     if (!user) {
       return res.status(401).send('Invalid email or password');
     }
-    req.body.user = user;
+    let userData = user.toJSON();
+    userData.access_id = userData._id;
+
+    req.body = { ...req.body, ...userData };
     next();
   } catch (error) {
     res.status(500).send('Internal server error');

@@ -40,7 +40,7 @@ const authSchema: Schema = new Schema({
     activated: { type: Date },                                 // Date when access was activated
     suspended: { type: Date, default: null }                   // Date when access was suspended (nullable)
   }
-});
+},{ versionKey: false });
 
 
 

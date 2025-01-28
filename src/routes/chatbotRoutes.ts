@@ -9,7 +9,9 @@ import {
     updateChatbotTopics,
     updateChatbotChatDB,
     updateChatbotVectorDB,
-    updateChatbotWebhook
+    updateChatbotWebhook,
+    updateChatbotAIModels,
+    updateChatbotPrompt
 } from '../controllers/chatbotController';
 import basicAuthMiddleware from '../middleware/auth'; // Assuming you have basic auth middleware
 import { createChatRoom, findRoom, getChatRoomById, getChatRooms, getConnectedUsers, getRoomToken, getUserMovements, searchChatRooms } from '../controllers/chatRoomController';
@@ -25,7 +27,8 @@ router.patch('/v1/chatbots/:chatbot_num/topics', basicAuthMiddleware, updateChat
 router.patch('/v1/chatbots/:chatbot_num/chat-db', basicAuthMiddleware, updateChatbotChatDB);
 router.patch('/v1/chatbots/:chatbot_num/vector-db', basicAuthMiddleware, updateChatbotVectorDB);
 router.patch('/v1/chatbots/:chatbot_num/webhook', basicAuthMiddleware, updateChatbotWebhook);
-
+router.patch('/v1/chatbots/:chatbot_num/ai-models',basicAuthMiddleware, updateChatbotAIModels);
+router.patch('/v1/chatbots/:chatbot_num/prompt', basicAuthMiddleware, updateChatbotPrompt);
 
 // chatroom routes
 
