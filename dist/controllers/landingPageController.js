@@ -227,6 +227,7 @@ const searchLandingPages = (req, res) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.searchLandingPages = searchLandingPages;
 const updateLandingPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    return res.status(200).json({ result: 500, error: 'Internal server error' });
     const { landing_page_id } = req.params;
     const updates = req.body;
     try {
