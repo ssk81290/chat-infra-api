@@ -9,7 +9,7 @@ interface ITaskFile {
   loader: string; // File Loader Enum
   name: string; // File Name
   size: number; // File Size (bytes)
-  path: string; // Local File Path
+  file: string; // Local File Path
   chunk_size?: number; // Optional Chunk Size
   chunk_overlap?: number; // Optional Chunk Overlap
 }
@@ -78,7 +78,7 @@ const taskSchema: Schema = new Schema({
     loader: { type: String },
     name: { type: String },
     size: { type: Number },
-    path: { type: String },
+    file: { type: String },
     chunk_size: { type: Number },
     chunk_overlap: { type: Number },
   },

@@ -7,6 +7,7 @@ import { createChatbotModel } from '../models/chatbot';   // Chatbot model
 import {createUserModel} from '../models/user';
 import {createUserLogModel} from '../models/userLog'; // UserLog model
 import {createTokenModel} from '../models/chatRoomToken'; // Token model
+import {createChatroomSessionModel} from "../models/chatRoomSession";
 import jwt from 'jsonwebtoken'; // JWT for generating tokens
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -16,6 +17,7 @@ const UserLog = createUserLogModel(chatRoomDBConnection);
 const Chatbot = createChatbotModel(infraDBConnection);
 const ChatRoom = createChatRoomModel(infraDBConnection);
 const Token = createTokenModel(chatRoomDBConnection);
+const chatroomSession = createChatroomSessionModel(infraDBConnection);
 
 // Create a new chat room under a chatbot
 export const createChatRoom = async (req: Request, res: Response) => {
@@ -302,7 +304,7 @@ export const getChatRoomById = async (req: Request, res: Response) => {
 // Get connected users of a chat room
 export const getConnectedUsers = async (req: Request, res: Response) => {
   const { chatroom_id } = req.params;
-  const { role, page_length = 20, page_num = 1 } = req.query;
+  const { role, session_id, page_length = 20, page_num = 1 } = req.query;
 
   try {
     // Find the chat room by chatroom_id
@@ -327,6 +329,10 @@ export const getConnectedUsers = async (req: Request, res: Response) => {
     if (role) {
       query.role = role;
     }
+    if(session_id)
+    {
+      query.session_id = session_id
+    }
 
     // Pagination
     const limit = parseInt(page_length as string, 10) || 20;
@@ -348,6 +354,7 @@ export const getConnectedUsers = async (req: Request, res: Response) => {
       page_num: page,
       total,
       users: users.map(user => ({
+        session_id : user.session_id,
         user_id: user._id,
         status: user.status,
         user_ref: user.user_ref,
@@ -377,7 +384,7 @@ export const getConnectedUsers = async (req: Request, res: Response) => {
 // Get user movements (entry/exit logs) in a chat room
 export const getUserMovements = async (req: Request, res: Response) => {
   const { chatroom_id } = req.params;
-  const { role, page_length = 20, page_num = 1 } = req.query;
+  const { role, session_id, page_length = 20, page_num = 1 } = req.query;
 
   try {
     // Pagination
@@ -391,6 +398,10 @@ export const getUserMovements = async (req: Request, res: Response) => {
     // If role is provided, filter by role
     if (role) {
       query.role = role;
+    }
+    if(session_id)
+    {
+      query.session_id = session_id;
     }
 
     // Count the total number of logs
@@ -408,6 +419,7 @@ export const getUserMovements = async (req: Request, res: Response) => {
       page_num: page,
       total,
       logs: logs.map(log => ({
+        session_id : log.session_id,
         user_id: log.user_id,
         user_ref: log.user_ref,
         name: log.name,
@@ -653,10 +665,146 @@ export const getRoomToken = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       result: 500,
       message: 'Error generating room token',
       error: "error.message"
+    });
+  }
+};
+export const getChatroomSessions = async (req: Request, res: Response) => {
+  try {
+    const { chatroom_id } = req.params;
+    let { start_date, end_date, page_length, page_num } = req.query;
+
+    // Default values for pagination
+    const limit = page_length ? parseInt(page_length as string, 10) : 20;
+    const page = page_num ? parseInt(page_num as string, 10) : 1;
+    const skip = (page - 1) * limit;
+
+    // Set default start and end date as today if not provided
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    const startDate = start_date ? new Date(start_date as string) : startOfDay;
+    const endDate = end_date ? new Date(end_date as string) : endOfDay;
+
+    // Find sessions for the given chatroom within the date range
+    const sessions = await chatroomSession.find({
+      chatroom_id,
+      session_start: { $gte: startDate, $lte: endDate },
+    })
+      .skip(skip)
+      .limit(limit)
+      .sort({ session_start: -1 });
+
+    // If no sessions found, return an error response
+    if (!sessions.length) {
+      return res.status(404).json({
+        result: 404,
+        error: 1008,
+        msg: "Chatroom not found",
+        desc: "Specified Chatroom is invalid or has no sessions in the given timeframe.",
+        data: { chatroom_id },
+      });
+    }
+
+    // Get total count of sessions
+    const total = await chatroomSession.countDocuments({
+      chatroom_id,
+      session_start: { $gte: startDate, $lte: endDate },
+    });
+
+    // Format the response
+    res.status(200).json({
+      result: 200,
+      page_length: limit,
+      page_num: page,
+      total,
+      chatroom_id,
+      sessions: sessions.map((session) => ({
+        session_id: session._id,
+        session_start: session.session_start,
+        session_stop: session.session_stop,
+        count: session.count,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching chatroom sessions:", error);
+    res.status(500).json({
+      result: 500,
+      msg: "Internal Server Error",
+    });
+  }
+};
+
+
+export const getChatbotSessions = async (req: Request, res: Response) => {
+  try {
+    const { chatbot_num } = req.params;
+    let { start_date, end_date, page_length, page_num } = req.query;
+
+    // Default values for pagination
+    const limit = page_length ? parseInt(page_length as string, 10) : 20;
+    const page = page_num ? parseInt(page_num as string, 10) : 1;
+    const skip = (page - 1) * limit;
+
+    // Set default start and end date as today if not provided
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    const startDate = start_date ? new Date(start_date as string) : startOfDay;
+    const endDate = end_date ? new Date(end_date as string) : endOfDay;
+
+    // Find sessions for all chatrooms under the given chatbot within the date range
+    const sessions = await chatroomSession.find({
+      chatbot_num,
+      session_start: { $gte: startDate, $lte: endDate },
+    })
+      .skip(skip)
+      .limit(limit)
+      .sort({ session_start: -1 });
+
+    // If no sessions found, return an error response
+    if (!sessions.length) {
+      return res.status(404).json({
+        result: 404,
+        error: 1008,
+        msg: "Chatbot not found",
+        desc: "Specified Chatbot is invalid or has no sessions in the given timeframe.",
+        data: { chatbot_num },
+      });
+    }
+
+    // Get total count of sessions
+    const total = await chatroomSession.countDocuments({
+      chatbot_num,
+      session_start: { $gte: startDate, $lte: endDate },
+    });
+
+    // Format the response
+    res.status(200).json({
+      result: 200,
+      page_length: limit,
+      page_num: page,
+      total,
+      chatbot_num,
+      sessions: sessions.map((session) => ({
+        chatroom_id: session.chatroom_id,
+        session_id: session._id,
+        session_start: session.session_start,
+        session_stop: session.session_stop,
+        count: session.count,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching chatbot sessions:", error);
+    res.status(500).json({
+      result: 500,
+      msg: "Internal Server Error",
     });
   }
 };

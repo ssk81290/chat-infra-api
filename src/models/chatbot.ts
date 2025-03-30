@@ -6,6 +6,8 @@ import { types } from "util";
 interface IChatbot extends Document {
   cluster_id: mongoose.Types.ObjectId;
   cluster_num: string;
+  cluster_name : string;
+  flag : string;
   access_id: mongoose.Types.ObjectId;
   access_num: string;
   account_id: mongoose.Types.ObjectId;
@@ -14,6 +16,7 @@ interface IChatbot extends Document {
   chatbot_num: string;
   chatbot_name: string;
   status: string;
+  mode : string;
   preferences: {
     users: number;
     bots: number;
@@ -51,6 +54,7 @@ interface IChatbot extends Document {
   vector_db: {};
   prompt: {
     persona: string;
+    persona_obj : {};
     instructions: {};
     collect: {};
     extra: {};
@@ -98,36 +102,39 @@ const chatbotSchema: Schema = new mongoose.Schema(
     cluster_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Cluster",
-      required: true,
+      required: false,
     },
-    cluster_num: { type: String, required: true },
+    cluster_num: { type: String, required: false },
+    cluster_name : { type: String, required: false },
+    flag : { type: String, required: false },
     access_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Auth",
-      required: true,
+      required: false,
     },
-    access_num: { type: String, required: true },
+    access_num: { type: String, required: false },
     account_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",
-      required: true,
+      required: false,
     },
-    account_num: { type: String, required: true, index: true },
-    account_name: { type: String, required: true },
-    chatbot_num: { type: String, required: true, unique: true, index: true },
-    chatbot_name: { type: String, required: true },
-    status: { type: String, required: true, index: true, default: "idle" }, // Default to 'idle'
+    account_num: { type: String, required: false, index: false },
+    account_name: { type: String, required: false },
+    chatbot_num: { type: String, required: false, unique: false, index: false },
+    chatbot_name: { type: String, required: false },
+    status: { type: String, required: false, index: false, default: "active" }, // Default to 'idle'
+    mode: { type: String, required: false, index: false }, // Default to 'idle'
     preferences: {
-      users: { type: Number, required: true },
-      bots: { type: Number, required: true },
-      agents: { type: Number, required: true },
-      viewers: { type: String, required: true },
+      users: { type: Number, required: false },
+      bots: { type: Number, required: false },
+      agents: { type: Number, required: false },
+      viewers: { type: String, required: false },
       bot: {
-        name: { type: String, required: true },
-        avatar: { type: String, required: true },
-        processor: { type: String, required: true },
-        script: { type: String, required: true },
-        path: { type: String, required: true },
+        name: { type: String, required: false },
+        avatar: { type: String, required: false },
+        processor: { type: String, required: false },
+        script: { type: String, required: false },
+        path: { type: String, required: false },
       },
       theme: { type: String, default: "light" },
       img_trigger: { type: String, required: false },
@@ -138,8 +145,8 @@ const chatbotSchema: Schema = new mongoose.Schema(
     },
     topics: { type: [String], default: [] },
     auto_topics: {
-      generate: { type: Boolean, default: true },
-      interval: { type: Number, default: true },
+      generate: { type: Boolean, default: false },
+      interval: { type: Number, default: false },
     },
     chat_db: {
       host: { type: String, required: false },
@@ -151,6 +158,7 @@ const chatbotSchema: Schema = new mongoose.Schema(
     vector_db: { type: Object, required: false },
     prompt: {
       persona: { type: String, required: false },
+      persona_obj : {type : Object, required : false},
       instructions: { type: Object, required: false },
       collect: { type: Object, required: false },
       extra: { type: Object, required: false },

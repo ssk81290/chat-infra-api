@@ -2,31 +2,48 @@
 import { Request, Response } from 'express';
 import { createLandingPageModel } from '../models/landingPage'; // Landing page model
 import { createAccountModel } from '../models/account';
+import { createCluster } from '../models/Cluster';
 import infraDBConnection from '../utils/infraDBConnection'; // InfraDB connection
 import moment from 'moment';
 import slugify from 'slugify';
 
 const account = createAccountModel(infraDBConnection);
+const cluster = createCluster(infraDBConnection);
 // Controller Function
 export const createLandingPage = async (req: Request, res: Response) => {
-  const { account_num, title, content, badge, meta_desc, keywords, track_code, settings, check_urls, menu  } = req.body;
+  const { cluster_num, account_num, title, content, badge, meta_desc, keywords, track_code, settings, check_urls, menu  } = req.body;
 
   try {
     // Validate required fields
     if (!account_num || !title || !settings?.sub_domain) {
       return res.status(400).json({ result: 400, error: 'Missing required fields' });
     }
+    
 
     const accountDetails = await account.findOne({account_num:account_num});
     if(!accountDetails)
     {
       return res.status(400).json({ result: 400, error: 'Invalid account number' });
     }
+    const cluster_query: any = {};
+    if(!cluster_num)
+    { 
+      cluster_query.cluster_num = accountDetails.cluster_num; 
+    }
+    else {
+      cluster_query.cluster_num = accountDetails.cluster_num; 
+    }
+  
+    const cluster_details = await cluster.findOne(cluster_query);
     const account_id  = accountDetails._id.toString();
     // Default values for optional fields
     const landingPageData = {
       account_num,
       account_id,
+      cluster_id : cluster_details?._id,
+      cluster_name : cluster_details?.cluster_name,
+      cluster_num : cluster_details?.cluster_num,
+      flag : cluster_details?.flag,
       title,
       content: content || '',
       badge: badge || '',
@@ -48,8 +65,9 @@ export const createLandingPage = async (req: Request, res: Response) => {
         created: moment().toISOString(),
       },
     };
-
     
+    
+
 
     const fqdn = landingPageData.settings?.fqdn || '';
     const keywordss = landingPageData.keywords?.split(',').map((kwd: string) => kwd.trim()) || [];
@@ -80,6 +98,7 @@ export const createLandingPage = async (req: Request, res: Response) => {
 
 
 export const getLandingPage = async (req: Request, res: Response) => {
+  
     const { landing_page_id } = req.params;
   
     try {
@@ -111,6 +130,10 @@ export const getLandingPage = async (req: Request, res: Response) => {
           account_name: landingPage.account_name,
           chatbot_id: landingPage.chatbot_id,
           chatbot_num: landingPage.chatbot_num,
+         
+          cluster_name: landingPage.cluster_name,
+          cluster_num: landingPage.cluster_num,
+          flag: landingPage.flag,
           title: landingPage.title,
           content: landingPage.content,
           badge: landingPage.badge,
@@ -150,6 +173,7 @@ export const getLandingPage = async (req: Request, res: Response) => {
       const query: any = {};
       if (filter?.account_num) query.account_num = filter.account_num;
       if (filter?.chatbot_num) query.chatbot_num = filter.chatbot_num;
+      if (filter?.cluster_num) query.cluster_num = filter.cluster_num;
       if (filter?.status) query.status = filter.status;
       if(filter?.fqdn) query.settings.fqdn = filter.fqdn;
       if (filter?.add_date) {

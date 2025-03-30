@@ -24,6 +24,7 @@ const basicAuthMiddleware = async (req: Request, res: Response, next: NextFuncti
     }
     let userData = user.toJSON();
     userData.access_id = userData._id;
+    delete userData.status;
 
     req.body = { ...req.body, ...userData };
     next();

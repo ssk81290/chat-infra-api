@@ -11,10 +11,11 @@ import {
     updateChatbotVectorDB,
     updateChatbotWebhook,
     updateChatbotAIModels,
-    updateChatbotPrompt
+    updateChatbotPrompt,
+
 } from '../controllers/chatbotController';
 import basicAuthMiddleware from '../middleware/auth'; // Assuming you have basic auth middleware
-import { createChatRoom, findRoom, getChatRoomById, getChatRooms, getConnectedUsers, getRoomToken, getUserMovements, searchChatRooms } from '../controllers/chatRoomController';
+import { createChatRoom, findRoom, getChatRoomById, getChatRooms, getConnectedUsers, getRoomToken, getUserMovements, searchChatRooms, getChatroomSessions, getChatbotSessions } from '../controllers/chatRoomController';
 const router = express.Router();
 
 // chatbot routes
@@ -34,6 +35,7 @@ router.patch('/v1/chatbots/:chatbot_num/prompt', basicAuthMiddleware, updateChat
 
 router.post('/v1/chatbots/:chatbot_num/chatrooms', basicAuthMiddleware, createChatRoom);
 router.get('/v1/chatbots/:chatbot_num/chatrooms', basicAuthMiddleware, getChatRooms);
+router.get("/v1/chatbots/:chatbot_num/sessions", basicAuthMiddleware, getChatbotSessions);
 
 router.post('/v1/chatrooms/search', basicAuthMiddleware, searchChatRooms);
 router.get('/v1/chatrooms/:chatroom_id', basicAuthMiddleware, getChatRoomById);
@@ -43,6 +45,7 @@ router.get('/v1/chatrooms/:chatroom_id/users', basicAuthMiddleware, getConnected
 router.get('/v1/chatrooms/:chatroom_id/user-movements', basicAuthMiddleware, getUserMovements);
 router.post('/v1/chatbots/:chatbot_num/find-room', basicAuthMiddleware, findRoom);
 router.post('/v1/chatrooms/:chatroom_id/token', basicAuthMiddleware, getRoomToken);
+router.get("/v1/chatrooms/:chatroom_id/sessions", basicAuthMiddleware, getChatroomSessions);
 
 
 export default router;

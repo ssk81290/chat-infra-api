@@ -7,6 +7,7 @@ interface IUserLog extends Document {
   chatroom_id: mongoose.Types.ObjectId;
   user_id: mongoose.Types.ObjectId;
   user_ref: string;
+  session_id:string;
   name: string;
   role: string;
   ip: string;
@@ -22,10 +23,11 @@ const userLogSchema: Schema = new Schema({
   chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Chatbot', required: true },
   chatroom_id: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom', required: true },
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to chat room user
+  session_id : { type : String, required: false},
   user_ref: { type: String, required: true },                                     // Authentication reference
   name: { type: String, required: true },                                         // User's name
-  role: { type: String, required: true },                                         // User's role
-  ip: { type: String, required: true },                                           // User's IP address
+  role: { type: String, required: false },                                         // User's role
+  ip: { type: String, required: false },                                           // User's IP address
   user_agent: { type: String, required: true },                                   // User's agent
   track: {
     connected: { type: Date, required: true },                                    // Timestamp when user connected

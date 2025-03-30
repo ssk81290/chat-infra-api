@@ -1,4 +1,4 @@
-import { Schema, Document, Model, Connection } from 'mongoose';
+import mongoose, { Schema, Document, Model, Connection } from 'mongoose';
 
 interface ISettings {
     sub_domain: string;       // Sub-domain name
@@ -31,7 +31,10 @@ interface ISettings {
     account_id: string;       // Reference to account
     account_num: string;      // Account number
     account_name: string;     // Account name
-  
+    cluster_id: mongoose.Types.ObjectId;
+    cluster_num: string;
+    cluster_name : string;
+    flag : string;
     chatbot_id: string;       // Reference to chatbot
     chatbot_num: string;      // Chatbot number
   
@@ -88,7 +91,14 @@ interface ISettings {
     account_id: { type: Schema.Types.ObjectId, required: true, index: true },
     account_num: { type: String, required: true, index: true },
     account_name: { type: String, index: true },
-  
+    cluster_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Cluster",
+        required: true,
+      },
+      cluster_num: { type: String, required: true },
+      cluster_name : { type: String, required: true },
+      flag : { type: String, required: true },
     chatbot_id: { type: Schema.Types.ObjectId, index: true },
     chatbot_num: { type: String, index: true },
   

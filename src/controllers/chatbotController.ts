@@ -6,27 +6,31 @@ import { createAccountModel } from "../models/account";
 import { createAIModel } from "../models/aiModel";
 import { createQueryProcessorModel } from "../models/queryProcessor";
 import { createDBVMModel } from "../models/dbVM";
+import { createCluster } from "../models/Cluster";
 
 const Chatbot = createChatbotModel(infraDBConnection);
 const Account = createAccountModel(infraDBConnection);
 const aiModel = createAIModel(infraDBConnection);
 const queryProcessor = createQueryProcessorModel(infraDBConnection);
 const vmDbs = createDBVMModel(infraDBConnection);
+const cluster = createCluster(infraDBConnection);
 
 // Create a new chatbot
 export const createChatbot = async (req: Request, res: Response) => {
   const {
-    cluster_id,
     cluster_num,
     access_id,
     access_num,
     customer_id,
     account_num,
     chatbot_name,
-    preferences,
+    preferences = {},
     access,
+    mode
+    
   } = req.body;
 
+  
   // Generate a chatbot_num (random alphanumeric string, 10 characters)
   const chatbot_num = `GCB-${Math.random()
     .toString(36)
@@ -37,7 +41,17 @@ export const createChatbot = async (req: Request, res: Response) => {
   if (!accountData) {
     return res.status(401).send("Invalid Account number provided");
   }
+  const cluster_query: any = {};
+  if(!cluster_num)
+  { 
+    cluster_query.cluster_num = accountData.cluster_num; 
+  }
+  else {
+    cluster_query.cluster_num = accountData.cluster_num; 
+  }
 
+  const cluster_details = await cluster.findOne(cluster_query);
+  
   const aiModelDetails = await aiModel.find({ default: true });
   if (aiModelDetails) {
     aiModelDetails.forEach((item) => {
@@ -57,7 +71,7 @@ export const createChatbot = async (req: Request, res: Response) => {
       }
     });
   }
-  const queryProcessorDetails = await queryProcessor.find({ default: true });
+  const queryProcessorDetails = await queryProcessor.find({ default: true, mode: mode });
   if (queryProcessorDetails) {
     queryProcessorDetails.forEach((item) => {
       preferences.bot = {
@@ -70,15 +84,15 @@ export const createChatbot = async (req: Request, res: Response) => {
     });
   }
   let vector_db = {};
-  const vmDetails = await vmDbs.findOne({ "account.account_num": account_num });
+  const vmDetails = await vmDbs.findOne({ "default": true, status:"open" });
   if (vmDetails) {
     vector_db = {
       type: `${vmDetails.type}`,
       host: `${vmDetails.host}`,
       port: `${vmDetails.port}`,
       namespace: "bot1",
-      collection: `${
-        vmDetails.collection_name ? vmDetails.collection_name : ""
+      collection: `bot_${
+        chatbot_num
       }`,
       username: `${vmDetails.username}`,
       password: `${vmDetails.password}`,
@@ -94,7 +108,6 @@ export const createChatbot = async (req: Request, res: Response) => {
   try {
     // Create the chatbot document
     const newChatbot = new Chatbot({
-      cluster_id,
       cluster_num,
       access_id,
       access_num,
@@ -103,13 +116,19 @@ export const createChatbot = async (req: Request, res: Response) => {
       account_name,
       chatbot_num,
       chatbot_name,
-
-      status: "idle", // Set default status to 'idle'
+      mode: mode,
+      status: "active", // Set default status to 'idle'
       preferences,
       vector_db: vector_db,
       access,
       track: { added: new Date(), modified: new Date() },
     });
+    if(cluster_details)
+    {
+      newChatbot.cluster_id = cluster_details._id;
+      newChatbot.cluster_name = cluster_details.cluster_name;
+      newChatbot.flag = cluster_details.flag
+    }
 
     let newChatbotData = await newChatbot.save();
     res.status(200).json({
@@ -146,18 +165,22 @@ export const getChatbot = async (req: Request, res: Response) => {
       chatbot: {
         chatbot_id: chatbot._id,
         cluster_num: chatbot.cluster_num,
+        cluster_name: chatbot.cluster_name,
+        flag: chatbot.flag,
         access_num: chatbot.access_num,
         account_num: chatbot.account_num,
         account_name: chatbot.account_name,
         chatbot_num: chatbot.chatbot_num,
         chatbot_name: chatbot.chatbot_name,
         status: chatbot.status,
+        prompt : chatbot.prompt,
         preferences: chatbot.preferences,
         topics: chatbot.topics,
         chat_db: chatbot.chat_db,
         ai_db: chatbot.vector_db,
         webhook: chatbot.webhook,
         track: chatbot.track,
+        mode : chatbot.mode
       },
     });
   } catch (error) {
@@ -182,6 +205,9 @@ export const searchChatbots = async (req: Request, res: Response) => {
   // Apply filter conditions
   if (filter.account_num) {
     query.account_num = filter.account_num;
+  }
+  if (filter.cluster_num) {
+    query.cluster_num = filter.cluster_num;
   }
 
   if (filter.chatbot_num) {
@@ -293,6 +319,7 @@ export const updateChatbotProfile = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
+    console.log("error", error);
     return res.status(500).json({
       result: 500,
       message: "Error updating chatbot profile",
@@ -304,7 +331,7 @@ export const updateChatbotProfile = async (req: Request, res: Response) => {
 export const updateChatbotStatus = async (req: Request, res: Response) => {
   const { chatbot_num } = req.params;
   const { status } = req.body;
-
+  console.log("status1", req.body);
   if (!status) {
     return res.status(400).json({
       result: 400,
@@ -652,10 +679,10 @@ export const updateChatbotAIModels = async (req: Request, res: Response) => {
 
 export const updateChatbotPrompt = async (req: Request, res: Response) => {
   const { chatbot_num } = req.params;
-  const { persona, instructions, collect, extra } = req.body;
+  const { persona, persona_obj, instructions, collect, extra } = req.body;
 
   try {
-    if (!persona && !instructions && !collect && !extra) {
+    if (!persona && !instructions && !collect && !extra && !persona_obj) {
       return res.status(400).json({
         result: 400,
         error: 'Payload cannot be empty',
@@ -679,6 +706,7 @@ export const updateChatbotPrompt = async (req: Request, res: Response) => {
 
     // Update prompt fields if provided in the request
     if (persona !== undefined) chatbot.prompt.persona = persona;
+    if(persona_obj !== undefined) chatbot.prompt.persona_obj = persona_obj;
     if (instructions !== undefined) {
       chatbot.prompt.instructions = {
         ...chatbot.prompt.instructions,

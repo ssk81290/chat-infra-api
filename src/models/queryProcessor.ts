@@ -10,6 +10,7 @@ interface IQueryProcessor extends Document {
   account_num?: string;    // Dedicated to a specific account (optional)
   chatbot_num?: string;    // Dedicated to a specific chatbot (optional)
   default: boolean;        // Indicates if this is the default processor
+  mode : string;
 }
 
 const queryProcessorSchema: Schema = new Schema({
@@ -22,6 +23,7 @@ const queryProcessorSchema: Schema = new Schema({
   account_num: { type: String, index: true },
   chatbot_num: { type: String, index: true },
   default: { type: Boolean, required: true, index: true },
+  mode : { type : String, required : true}
 }, { versionKey: false });
 
 export const createQueryProcessorModel = (connection: Connection ) => {

@@ -8,13 +8,14 @@ interface IUser extends Document {
   chatbot_id: mongoose.Types.ObjectId;
   chatbot_num: string;
   chatroom_id: mongoose.Types.ObjectId;
+  session_id : string;
   status: string;
   user_ref: string;
   name: string;
   ip: string;
   user_agent: string;
   photo: string;
-  role: 'viewer' | 'sender' | 'bot' | 'agent';
+  role: 'viewer' | 'user' | 'bot' | 'agent';
   qualified: {
     phone?: string;
     email?: string;
@@ -53,14 +54,14 @@ const userSchema: Schema = new Schema({
   chatbot_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Chatbot', required: true },
   chatbot_num: { type: String, required: true, index: true },
   chatroom_id: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom', required: true },
-  
+  session_id : { type : String, required: false},
   status: { type: String, required: true, index: true },  // Chat Room User Status
   user_ref: { type: String, required: true },              // User authentication reference
   name: { type: String, required: true },                  // User's name
-  ip: { type: String, required: true },                    // User's IP address
-  user_agent: { type: String, required: true },            // User's user agent
+  ip: { type: String, required: false },                    // User's IP address
+  user_agent: { type: String, required: false },            // User's user agent
   photo: { type: String },                                 // Profile picture URL
-  role: { type: String, enum: ['viewer', 'sender', 'bot', 'agent'], required: true }, // User role
+  role: { type: String, enum: ['viewer', 'user', 'bot', 'agent'], required: true }, // User role
   
   qualified: {                                             // Qualified lead data
     phone: { type: String },
