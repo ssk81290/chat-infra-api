@@ -1,13 +1,13 @@
 import mongoose, { Schema, Document, Model, Connection } from 'mongoose';
 
-interface ISettings {
-    sub_domain: string;       // Sub-domain name
-    domain: string;           // Domain name
-    fqdn: string;             // Fully qualified domain name
-    expiry?: Date;            // Optional expiry date
-    theme: string;            // Theme for the landing page
-    cache_expiry:number;
-  }
+  interface ISettings {
+      sub_domain: string;       // Sub-domain name
+      domain: string;           // Domain name
+      fqdn: string;             // Fully qualified domain name
+      expiry?: Date;            // Optional expiry date
+      theme: string;            // Theme for the landing page
+      cache_expiry:number;
+    }
   interface IMenu {
     whatsapp?: {
       icon?: string;
@@ -44,9 +44,13 @@ interface ISettings {
     meta_desc: string;        // Meta description for SEO
     keywords: string;        // Comma-separated keywords for SEO
     track_code: string;       // Tracking code (e.g., Google Analytics)
+    gtag_code: string;  
+    clarity_code: string;  
+    logo: string;  
     menu: IMenu; 
     settings: ISettings;      // Page settings
     urls : [];
+    url_contents: Array<{ [key: string]: { content: string } }>;  // Array of URL contents
     check_urls : boolean;
     status: string;           // Landing page status
     track: {
@@ -107,10 +111,26 @@ interface ISettings {
     badge: { type: String, default: '' },
     meta_desc: { type: String, default: '' },
     keywords: { type: String, default: '' },
+    logo: { type: String, default: '' },
     track_code: { type: String, default: '' },
+    gtag_code: { type: String, default: '' },
+    clarity_code: { type: String, default: '' },
     menu: { type: menuSchema, required: false },
     settings: { type: settingsSchema, required: true },
     urls : [],
+    url_contents: [{
+      type: Schema.Types.Mixed,
+      default: [],
+      transform: function(doc: any) {
+        // Transform the document to only include key and content
+        const key = Object.keys(doc)[0];
+        return {
+          [key]: {
+            content: doc[key].content
+          }
+        };
+      }
+    }],
     check_urls : {type : Boolean, default : false},
   
     status: { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active', index: true },
@@ -122,6 +142,7 @@ interface ISettings {
       suspended: { type: Date },
     },
   }, { versionKey: false });
+  
 
 export const createLandingPageModel = (connection: Connection) => {
   return connection.model<ILandingPage>('LandingPage', landingPageSchema, 'col_landing_pages');

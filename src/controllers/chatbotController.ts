@@ -26,6 +26,7 @@ export const createChatbot = async (req: Request, res: Response) => {
     chatbot_name,
     preferences = {},
     access,
+    desc,
     mode
     
   } = req.body;
@@ -118,6 +119,7 @@ export const createChatbot = async (req: Request, res: Response) => {
       chatbot_name,
       mode: mode,
       status: "active", // Set default status to 'idle'
+      desc,
       preferences,
       vector_db: vector_db,
       access,
@@ -164,9 +166,11 @@ export const getChatbot = async (req: Request, res: Response) => {
       result: 200,
       chatbot: {
         chatbot_id: chatbot._id,
+        landing_page_id: chatbot.landing_page_id,
         cluster_num: chatbot.cluster_num,
         cluster_name: chatbot.cluster_name,
         flag: chatbot.flag,
+        desc: chatbot.desc,
         access_num: chatbot.access_num,
         account_num: chatbot.account_num,
         account_name: chatbot.account_name,
@@ -217,6 +221,12 @@ export const searchChatbots = async (req: Request, res: Response) => {
   if (filter.status) {
     query.status = filter.status;
   }
+  if (filter?.chatbot_name && filter.chatbot_name !== "") {
+    query.chatbot_name = {
+      $regex: filter.chatbot_name,
+      $options: 'i' // case-insensitive
+    };
+  }
 
   if (filter.add_date) {
     query["track.added"] = {
@@ -258,7 +268,7 @@ export const searchChatbots = async (req: Request, res: Response) => {
       page_length: pageLength,
       page_num: pageNum,
       total,
-      chatbots,
+      chatbots
     });
   } catch (error) {
     res.status(500).json({
@@ -282,6 +292,32 @@ export const updateChatbotProfile = async (req: Request, res: Response) => {
         message: `Chatbot with number ${chatbot_num} not found`,
       });
     }
+
+    // Get existing chatbot first
+    const existingChatbot = await Chatbot.findOne({ chatbot_num });
+
+    if (!existingChatbot) {
+        return res.status(404).json({
+            result: 404,
+            error: 'Chatbot not found',
+            msg: 'Could not find chatbot with the specified chatbot_num'
+        });
+    }
+
+    const existingPreferences = existingChatbot.preferences;
+
+    // Merge the existing preferences with new values
+    const updatedPreferences = {
+        ...existingPreferences,
+        bot: {
+            ...existingPreferences.bot,
+            ...updateFields.preferences.bot
+        },
+        theme: updateFields.preferences.theme
+    };
+
+    // Use the merged preferences in your update
+    updateFields.preferences = updatedPreferences;
 
     // Update only the fields that are provided
     if (updateFields.chatbot_name) {
@@ -679,16 +715,26 @@ export const updateChatbotAIModels = async (req: Request, res: Response) => {
 
 export const updateChatbotPrompt = async (req: Request, res: Response) => {
   const { chatbot_num } = req.params;
-  const { persona, persona_obj, instructions, collect, extra } = req.body;
+  const { persona, persona_object, instructions, collect, extra } = req.body;
 
   try {
-    if (!persona && !instructions && !collect && !extra && !persona_obj) {
-      return res.status(400).json({
-        result: 400,
-        error: 'Payload cannot be empty',
-        msg: 'At least one field must be provided in the payload.',
-      });
-    }
+    
+    // if (!instructions || !collect || !extra) {
+    //     return res.status(400).json({
+    //         result: 400,
+    //         error: 'Missing required fields',
+    //         msg: 'instructions, collect, and extra are required'
+    //     });
+    // }
+    
+    // Then check that at least one of persona or persona_object exists
+    // if (!persona && !persona_object) {
+    //     return res.status(400).json({
+    //         result: 400,
+    //         error: 'Missing required fields',
+    //         msg: 'Either persona or persona_object is required'
+    //     });
+    // }
 
     const Chatbot = createChatbotModel(infraDBConnection);
 
@@ -706,7 +752,7 @@ export const updateChatbotPrompt = async (req: Request, res: Response) => {
 
     // Update prompt fields if provided in the request
     if (persona !== undefined) chatbot.prompt.persona = persona;
-    if(persona_obj !== undefined) chatbot.prompt.persona_obj = persona_obj;
+    if(persona_object !== undefined) chatbot.prompt.persona_obj = persona_object;
     if (instructions !== undefined) {
       chatbot.prompt.instructions = {
         ...chatbot.prompt.instructions,

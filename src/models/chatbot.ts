@@ -5,6 +5,7 @@ import { types } from "util";
 // Interface for the Chatbot
 interface IChatbot extends Document {
   cluster_id: mongoose.Types.ObjectId;
+  landing_page_id: mongoose.Types.ObjectId;
   cluster_num: string;
   cluster_name : string;
   flag : string;
@@ -13,6 +14,7 @@ interface IChatbot extends Document {
   account_id: mongoose.Types.ObjectId;
   account_num: string;
   account_name: string;
+  desc : string;
   chatbot_num: string;
   chatbot_name: string;
   status: string;
@@ -104,8 +106,14 @@ const chatbotSchema: Schema = new mongoose.Schema(
       ref: "Cluster",
       required: false,
     },
+    landing_page_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "LandingPage",
+      required: false,
+    },
     cluster_num: { type: String, required: false },
     cluster_name : { type: String, required: false },
+    desc : { type: String, required: false },
     flag : { type: String, required: false },
     access_id: {
       type: mongoose.Schema.Types.ObjectId,

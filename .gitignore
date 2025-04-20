@@ -3,6 +3,9 @@
 /.idea/
 # dependencies
 /node_modules
+# Ignore build output
+dist/
+
 /.pnp
 .pnp.js
 .yarn/install-state.gz
